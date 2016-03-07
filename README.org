@@ -1,0 +1,3 @@
+* Empic --- Emacs oriented SDL picture viewer
+  A quick and dirty sketch.  OpenGL ES 2 is used for rendering.  Basic
+  view functions are implemented: zoom, fit, pan and rotate.
