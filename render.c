@@ -73,8 +73,7 @@ static int uniform_sampler = -1;
 
 static struct
 {
-  int x, y;
-  float zoom, rotate;
+  float x, y, zoom, rotate;
 } view;
 
 void mat33mul( float * m, const float * l, const float * r )
@@ -122,7 +121,6 @@ float * vertex_array( int width, int height )
 
   if( width > 0 || height > 0 )
     {
-
       vertices[ 0 ] = -width / 2.f;
       vertices[ 1 ] = -height / 2.f;
       vertices[ 2 ] = width / 2.f;
@@ -136,39 +134,12 @@ float * vertex_array( int width, int height )
   return vertices;
 }
 
-void move_view( int x, int y )
+void bbox_size( float * width, float * height )
 {
-  view.x = x;
-  view.y = y;
-}
-
-void move_view_delta( int x, int y )
-{
-  view.x += x;
-  view.y += y;
-}
-
-void zoom_view( float z )
-{
-  if( z > 0.f )
-    view.zoom = z;
-}
-
-void zoom_view_frac( float z )
-{
-  zoom_view( view.zoom * z );
-}
-
-void zoom_view_fit( zoom_fit_t fit )
-{
-  int w, h;
   float
-    z, *va = vertex_array( 0, 0 ),
+    *va = vertex_array( 0, 0 ),
     p1[2], p2[2], p3[2], p4[2],
-    minx, maxx, miny, maxy,
-    imagew, imageh;
-
-  SDL_GetWindowSize( window, &w, &h );
+    minx, maxx, miny, maxy;
 
   p1[ 0 ] = va[ 0 ];
   p1[ 1 ] = va[ 1 ];
@@ -197,8 +168,65 @@ void zoom_view_fit( zoom_fit_t fit )
   maxy = SDL_max( maxy,  p3[1] );
   maxy = SDL_max( maxy,  p4[1] );
 
-  imagew = maxx - minx;
-  imageh = maxy - miny;
+  *width = maxx - minx;
+  *height = maxy - miny;
+}
+
+void move_view( float x, float y )
+{
+  int w, h;
+  float w2, h2, imagew, imageh;
+
+  SDL_GetWindowSize( window, &w, &h );
+  bbox_size( &imagew, &imageh );
+
+  w2 = w / 2.f / view.zoom;
+  imagew /= 2.f;
+  h2 = h / 2.f / view.zoom;
+  imageh /= 2.f;
+
+  if( view.x - w2 <= -imagew && view.x + w2 >= imagew )
+    x = 0.f;
+  else if( x - w2 < -imagew )
+    x = -imagew + w2;
+  else if( x + w2 > imagew )
+    x = imagew - w2;
+
+  if( view.y - h2 <= -imageh && view.y + h2 >= imageh )
+    y = 0.f;
+  else if( y - h2 < -imageh )
+    y = -imageh + h2;
+  else if( y + h2 > imageh )
+    y = imageh - h2;
+
+  view.x = x;
+  view.y = y;
+}
+
+void move_view_delta( float x, float y )
+{
+  move_view( view.x + x, view.y + y );
+}
+
+void zoom_view( float z )
+{
+  if( z > 0.f )
+    view.zoom = z;
+}
+
+void zoom_view_frac( float z )
+{
+  zoom_view( view.zoom * z );
+}
+
+void zoom_view_fit( zoom_fit_t fit )
+{
+  int w, h;
+  float z = view.zoom, imagew, imageh;
+
+  SDL_GetWindowSize( window, &w, &h );
+
+  bbox_size( &imagew, &imageh );
 
   switch( fit )
     {
@@ -225,6 +253,7 @@ void zoom_view_fit( zoom_fit_t fit )
     z = (float)h / imageh;
 
   view.zoom = z;
+  move_view( 0.f, 0.f );
 }
 
 void rotate_view( float angle )
@@ -267,7 +296,7 @@ void make_view_matrix( float * m )
   int x, y, w, h;
   float z;
   float
-    sc[ 9 ], tr[ 9 ], rs[ 9 ], pos[ 2 ] = { view.x ,  view.y };
+    sc[ 9 ], tr[ 9 ], rs[ 9 ], pos[ 2 ] = { -view.x , -view.y };
 
   view_port( &x, &y, &w, &h );
   z = 2.f / w * view.zoom;
@@ -393,10 +422,18 @@ int load_texture( SDL_Surface * surface )
   GL_CHECK( glGenTextures( 1, &texture ) );
   GL_CHECK( glBindTexture( GL_TEXTURE_2D, texture ) );
 
-  GL_CHECK( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR ) );
-  GL_CHECK( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR ) );
-  GL_CHECK( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE ) );
-  GL_CHECK( glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE ) );
+  GL_CHECK( glTexParameteri( GL_TEXTURE_2D,
+                             GL_TEXTURE_MIN_FILTER,
+                             GL_LINEAR_MIPMAP_LINEAR ) );
+  GL_CHECK( glTexParameteri( GL_TEXTURE_2D,
+                             GL_TEXTURE_MAG_FILTER,
+                             GL_LINEAR ) );
+  GL_CHECK( glTexParameteri( GL_TEXTURE_2D,
+                             GL_TEXTURE_WRAP_S,
+                             GL_CLAMP_TO_EDGE ) );
+  GL_CHECK( glTexParameteri( GL_TEXTURE_2D,
+                             GL_TEXTURE_WRAP_T,
+                             GL_CLAMP_TO_EDGE ) );
 
   GL_CHECK( glTexImage2D( GL_TEXTURE_2D,
                           0,
@@ -432,7 +469,7 @@ int init_render()
 
   glClearColor( 0.0, 0.0, 0.0, 1.0 );
 
-  view.x = view.y = 0;
+  view.x = view.y = 0.f;
   view.zoom = 1.f;
   view.rotate = 0.f;
 

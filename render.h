@@ -21,8 +21,8 @@ typedef enum {
   ZOOM_FIT_SMALL
 } zoom_fit_t;
 
-void move_view( int x, int y );
-void move_view_delta( int x, int y );
+void move_view( float x, float y );
+void move_view_delta( float x, float y );
 void zoom_view( float z );
 void zoom_view_frac( float z );
 void zoom_view_fit( zoom_fit_t fit );

@@ -88,16 +88,16 @@ void process_key_event( SDL_Event * event )
       zoom_view( 1.0f );
       break;
     case SDLK_RIGHT:
-      move_view_delta( -10, 0 );
-      break;
-    case SDLK_LEFT:
       move_view_delta( 10, 0 );
       break;
+    case SDLK_LEFT:
+      move_view_delta( -10, 0 );
+      break;
     case SDLK_UP:
-      move_view_delta( 0, -10 );
+      move_view_delta( 0, 10 );
       break;
     case SDLK_DOWN:
-      move_view_delta( 0, 10 );
+      move_view_delta( 0, -10 );
       break;
     case SDLK_SLASH:
       rotate_view( 0 );
