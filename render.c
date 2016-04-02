@@ -529,7 +529,7 @@ int load_image( const char * file )
 
   vertex_array( surface->w, surface->h );
 
-  if(!load_texture( surface ) )
+  if( !load_texture( surface ) )
     return 0;
 
   SDL_FreeSurface( surface );

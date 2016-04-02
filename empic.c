@@ -23,6 +23,12 @@ SDL_Window * window = NULL;
 
 static int quit = 0, do_render = 0;
 
+static struct
+{
+  char ** names;
+  int size, current;
+} files_list = { NULL, 0, -1 };
+
 int create_window()
 {
   window = SDL_CreateWindow( "Empic", 0, 0, 800, 600,
@@ -49,6 +55,30 @@ void cleanup_and_quit()
 {
   destroy_window();
   SDL_Quit();
+}
+
+void load_next_image()
+{
+  int n = files_list.current;
+
+  while( n < files_list.size - 1 )
+    if( load_image( files_list.names[ ++n ] ) )
+      {
+        files_list.current = n;
+        return;
+      }
+}
+
+void load_prev_image()
+{
+  int n = files_list.current;
+
+  while( n > 0 )
+    if( load_image( files_list.names[ --n ] ) )
+      {
+        files_list.current = n;
+        return;
+      }
 }
 
 void process_window_event( SDL_Event * event )
@@ -114,6 +144,14 @@ void process_key_event( SDL_Event * event )
     case SDLK_QUOTE:
       rotate_view_delta( 10 );
       break;
+    case SDLK_SPACE:
+      load_next_image();
+      zoom_view_fit( ZOOM_FIT_BIG );
+      break;
+    case SDLK_BACKSPACE:
+      load_prev_image();
+      zoom_view_fit( ZOOM_FIT_BIG );
+      break;
     default:;
     }
 
@@ -165,7 +203,11 @@ int main( int argc, char ** argv )
       return 3;
     }
 
-  if( !load_image( argv[ 1 ] ) )
+  files_list.names = argv + 1;
+  files_list.size = argc - 1;
+
+  load_next_image();
+  if( files_list.current < 0 )
     {
       cleanup_and_quit();
       return 4;
