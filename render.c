@@ -400,11 +400,6 @@ int load_texture( SDL_Surface * surface )
 {
   static GLuint texture = -1;
 
-  if( texture >= 0 )
-    {
-      GL_CHECK( glDeleteTextures( 1, &texture ) );
-    }
-
   if( !surface )
     {
       texture = -1;
@@ -417,6 +412,11 @@ int load_texture( SDL_Surface * surface )
                " but only SDL_PIXELFORMAT_RGB24, 0x%x is supported.",
                surface->format->format, SDL_PIXELFORMAT_RGB24 );
       return 0;
+    }
+
+  if( texture >= 0 )
+    {
+      GL_CHECK( glDeleteTextures( 1, &texture ) );
     }
 
   GL_CHECK( glGenTextures( 1, &texture ) );
@@ -527,10 +527,10 @@ int load_image( const char * file )
       return 0;
     }
 
-  vertex_array( surface->w, surface->h );
-
   if( !load_texture( surface ) )
     return 0;
+
+  vertex_array( surface->w, surface->h );
 
   SDL_FreeSurface( surface );
 
