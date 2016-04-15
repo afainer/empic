@@ -235,7 +235,10 @@ void zoom_view_fit( zoom_fit_t fit )
 
     case ZOOM_FIT_BIG:
       if( imagew <= w && imageh <= h )
-        return;
+        {
+          view.zoom = 1.f;
+          return;
+        }
       break;
 
     case ZOOM_FIT_SMALL:

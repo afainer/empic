@@ -114,6 +114,9 @@ void process_key_event( SDL_Event * event )
     case SDLK_0:
       zoom_view_fit( ZOOM_FIT_BIG );
       break;
+    case SDLK_9:
+      zoom_view_fit( ZOOM_FIT_SMALL );
+      break;
     case SDLK_1:
       zoom_view( 1.0f );
       break;
