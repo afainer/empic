@@ -21,17 +21,17 @@ typedef enum {
   ZOOM_FIT_SMALL
 } zoom_fit_t;
 
-void move_view( float x, float y );
-void move_view_delta( float x, float y );
-void zoom_view( float z );
-void zoom_view_frac( float z );
-void zoom_view_fit( zoom_fit_t fit );
-void rotate_view( float angle );
-void rotate_view_delta( float angle );
+void move_view(float x, float y);
+void move_view_delta(float x, float y);
+void zoom_view(float z);
+void zoom_view_frac(float z);
+void zoom_view_fit(zoom_fit_t fit);
+void rotate_view(float angle);
+void rotate_view_delta(float angle);
 
 void update_viewport();
 
 int init_render();
 int render();
 
-int load_image( const char * file );
+int load_image(const char * file);

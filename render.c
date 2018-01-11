@@ -34,7 +34,7 @@ static const char * vertex_shader =
 ""
 "void main()"
 "{"
-"  gl_Position = vec4( view * vec3( position, 1. ), 1. );"
+"  gl_Position = vec4(view * vec3(position, 1.), 1.);"
 "  texcoord = texposition;"
 "}";
 
@@ -44,13 +44,13 @@ static const char * fragment_shader =
 ""
 "void main()"
 "{"
-"  gl_FragColor = texture2D( sampler, texcoord );"
+"  gl_FragColor = texture2D(sampler, texcoord);"
 "}";
 
-static const float tex_vertices[ 8 ] = { 0.f, 1.f,
-                                         1.f, 1.f,
-                                         0.f, 0.f,
-                                         1.f, 0.f };
+static const float tex_vertices[8] = {0.f, 1.f,
+                                      1.f, 1.f,
+                                      0.f, 0.f,
+                                      1.f, 0.f};
 
 static int attrib_position = -1;
 static int attrib_texposition = -1;
@@ -61,12 +61,12 @@ static int uniform_sampler = -1;
   x;                                                            \
   {                                                             \
     GLenum err = glGetError();                                  \
-    if( err != GL_NO_ERROR )                                    \
+    if (err != GL_NO_ERROR)                                     \
       {                                                         \
-        SDL_Log( "glGetError() = %i (0x%.8x) at line %i\n",     \
-                 err,                                           \
-                 err,                                           \
-                 __LINE__ );                                    \
+        SDL_Log("glGetError() = %i (0x%.8x) at line %i\n",      \
+                err,                                            \
+                err,                                            \
+                __LINE__);                                      \
         return 0;                                               \
       }                                                         \
   }
@@ -76,7 +76,7 @@ static struct
   float x, y, zoom, rotate;
 } view;
 
-void mat33mul( float * m, const float * l, const float * r )
+void mat33mul(float * m, const float * l, const float * r)
 {
   m[0] = l[0] * r[0] + l[1] * r[3] + l[2] * r[6];
   m[1] = l[0] * r[1] + l[1] * r[4] + l[2] * r[7];
@@ -89,7 +89,7 @@ void mat33mul( float * m, const float * l, const float * r )
   m[8] = l[6] * r[2] + l[7] * r[5] + l[8] * r[8];
 }
 
-void transform( const float * mat, float * point )
+void transform(const float * mat, float * point)
 {
   float p[ 3 ];
 
@@ -97,144 +97,144 @@ void transform( const float * mat, float * point )
   p[1] = mat[1] * point[0] + mat[4] * point[1] + mat[7];
   p[2] = mat[2] * point[0] + mat[5] * point[1] + mat[8];
 
-  point[ 0 ] = p[ 0 ] / p[ 2 ];
-  point[ 1 ] = p[ 1 ] / p[ 2 ];
+  point[0] = p[0] / p[2];
+  point[1] = p[1] / p[2];
 }
 
-float * rotation_matrix( int invert )
+float * rotation_matrix(int invert)
 {
-  static float rot[ 9 ];
+  static float rot[9];
   float
-    c = cosf( invert ? -view.rotate : view.rotate ),
-    s = sinf( invert ? -view.rotate : view.rotate );
+    c = cosf(invert ? -view.rotate : view.rotate),
+    s = sinf(invert ? -view.rotate : view.rotate);
 
-  rot[ 0 ] =   c; rot[ 1 ] =  -s; rot[ 2 ] = 0;
-  rot[ 3 ] =   s; rot[ 4 ] =   c; rot[ 5 ] = 0;
-  rot[ 6 ] = 0.f; rot[ 7 ] = 0.f; rot[ 8 ] = 1.f;
+  rot[0] =   c; rot[1] =  -s; rot[2] = 0;
+  rot[3] =   s; rot[4] =   c; rot[5] = 0;
+  rot[6] = 0.f; rot[7] = 0.f; rot[8] = 1.f;
 
   return rot;
 }
 
-float * vertex_array( int width, int height )
+float * vertex_array(int width, int height)
 {
-  static float vertices[ 8 ];
+  static float vertices[8];
 
-  if( width > 0 || height > 0 )
+  if (width > 0 || height > 0)
     {
-      vertices[ 0 ] = -width / 2.f;
-      vertices[ 1 ] = -height / 2.f;
-      vertices[ 2 ] = width / 2.f;
-      vertices[ 3 ] = -height / 2.f;
-      vertices[ 4 ] = -width / 2.f;
-      vertices[ 5 ] = height / 2.f;
-      vertices[ 6 ] = width / 2.f;
-      vertices[ 7 ] = height / 2.f;;
+      vertices[0] = -width / 2.f;
+      vertices[1] = -height / 2.f;
+      vertices[2] = width / 2.f;
+      vertices[3] = -height / 2.f;
+      vertices[4] = -width / 2.f;
+      vertices[5] = height / 2.f;
+      vertices[6] = width / 2.f;
+      vertices[7] = height / 2.f;;
     }
 
   return vertices;
 }
 
-void bbox_size( float * width, float * height )
+void bbox_size(float * width, float * height)
 {
   float
-    *va = vertex_array( 0, 0 ),
+    *va = vertex_array(0, 0),
     p1[2], p2[2], p3[2], p4[2],
     minx, maxx, miny, maxy;
 
-  p1[ 0 ] = va[ 0 ];
-  p1[ 1 ] = va[ 1 ];
-  p2[ 0 ] = va[ 2 ];
-  p2[ 1 ] = va[ 3 ];
-  p3[ 0 ] = va[ 4 ];
-  p3[ 1 ] = va[ 5 ];
-  p4[ 0 ] = va[ 6 ];
-  p4[ 1 ] = va[ 7 ];
+  p1[0] = va[0];
+  p1[1] = va[1];
+  p2[0] = va[2];
+  p2[1] = va[3];
+  p3[0] = va[4];
+  p3[1] = va[5];
+  p4[0] = va[6];
+  p4[1] = va[7];
 
-  transform( rotation_matrix( 0 ), p1 );
-  transform( rotation_matrix( 0 ), p2 );
-  transform( rotation_matrix( 0 ), p3 );
-  transform( rotation_matrix( 0 ), p4 );
+  transform(rotation_matrix(0), p1);
+  transform(rotation_matrix(0), p2);
+  transform(rotation_matrix(0), p3);
+  transform(rotation_matrix(0), p4);
 
-  minx = SDL_min( p1[0], p2[0] );
-  minx = SDL_min( minx,  p3[0] );
-  minx = SDL_min( minx,  p4[0] );
-  miny = SDL_min( p1[1], p2[1] );
-  miny = SDL_min( miny,  p3[1] );
-  miny = SDL_min( miny,  p4[1] );
-  maxx = SDL_max( p1[0], p2[0] );
-  maxx = SDL_max( maxx,  p3[0] );
-  maxx = SDL_max( maxx,  p4[0] );
-  maxy = SDL_max( p1[1], p2[1] );
-  maxy = SDL_max( maxy,  p3[1] );
-  maxy = SDL_max( maxy,  p4[1] );
+  minx = SDL_min(p1[0], p2[0]);
+  minx = SDL_min(minx,  p3[0]);
+  minx = SDL_min(minx,  p4[0]);
+  miny = SDL_min(p1[1], p2[1]);
+  miny = SDL_min(miny,  p3[1]);
+  miny = SDL_min(miny,  p4[1]);
+  maxx = SDL_max(p1[0], p2[0]);
+  maxx = SDL_max(maxx,  p3[0]);
+  maxx = SDL_max(maxx,  p4[0]);
+  maxy = SDL_max(p1[1], p2[1]);
+  maxy = SDL_max(maxy,  p3[1]);
+  maxy = SDL_max(maxy,  p4[1]);
 
   *width = maxx - minx;
   *height = maxy - miny;
 }
 
-void move_view( float x, float y )
+void move_view(float x, float y)
 {
   int w, h;
   float w2, h2, imagew, imageh;
 
-  SDL_GetWindowSize( window, &w, &h );
-  bbox_size( &imagew, &imageh );
+  SDL_GetWindowSize(window, &w, &h);
+  bbox_size(&imagew, &imageh);
 
   w2 = w / 2.f / view.zoom;
   imagew /= 2.f;
   h2 = h / 2.f / view.zoom;
   imageh /= 2.f;
 
-  if( view.x - w2 <= -imagew && view.x + w2 >= imagew )
+  if (view.x - w2 <= -imagew && view.x + w2 >= imagew)
     x = 0.f;
-  else if( x - w2 < -imagew )
+  else if (x - w2 < -imagew)
     x = -imagew + w2;
-  else if( x + w2 > imagew )
+  else if (x + w2 > imagew)
     x = imagew - w2;
 
-  if( view.y - h2 <= -imageh && view.y + h2 >= imageh )
+  if (view.y - h2 <= -imageh && view.y + h2 >= imageh)
     y = 0.f;
-  else if( y - h2 < -imageh )
+  else if (y - h2 < -imageh)
     y = -imageh + h2;
-  else if( y + h2 > imageh )
+  else if (y + h2 > imageh)
     y = imageh - h2;
 
   view.x = x;
   view.y = y;
 }
 
-void move_view_delta( float x, float y )
+void move_view_delta(float x, float y)
 {
-  move_view( view.x + x, view.y + y );
+  move_view(view.x + x, view.y + y);
 }
 
-void zoom_view( float z )
+void zoom_view(float z)
 {
-  if( z > 0.f )
+  if(z > 0.f)
     view.zoom = z;
 }
 
-void zoom_view_frac( float z )
+void zoom_view_frac(float z)
 {
-  zoom_view( view.zoom * z );
+  zoom_view(view.zoom * z);
 }
 
-void zoom_view_fit( zoom_fit_t fit )
+void zoom_view_fit(zoom_fit_t fit)
 {
   int w, h;
   float z = view.zoom, imagew, imageh;
 
-  SDL_GetWindowSize( window, &w, &h );
+  SDL_GetWindowSize(window, &w, &h);
 
-  bbox_size( &imagew, &imageh );
+  bbox_size(&imagew, &imageh);
 
-  switch( fit )
+  switch (fit)
     {
     case ZOOM_FIT:
       break;
 
     case ZOOM_FIT_BIG:
-      if( imagew <= w && imageh <= h )
+      if (imagew <= w && imageh <= h)
         {
           view.zoom = 1.f;
           return;
@@ -242,38 +242,38 @@ void zoom_view_fit( zoom_fit_t fit )
       break;
 
     case ZOOM_FIT_SMALL:
-      if( imagew >= w || imageh >= h )
+      if (imagew >= w || imageh >= h)
         return;
       break;
 
     default:
-      SDL_Log( "Wrong zoom fit type: %d", fit );
+      SDL_Log("Wrong zoom fit type: %d", fit);
       return;
     }
 
   z = (float)w / imagew;
-  if( h < imageh * z )
+  if (h < imageh * z)
     z = (float)h / imageh;
 
   view.zoom = z;
-  move_view( 0.f, 0.f );
+  move_view(0.f, 0.f);
 }
 
-void rotate_view( float angle )
+void rotate_view(float angle)
 {
   view.rotate = angle * M_PI / 180.0;
 }
 
-void rotate_view_delta( float angle )
+void rotate_view_delta(float angle)
 {
   view.rotate += angle * M_PI / 180.0;
 }
 
-void view_port( int * x, int * y, int * w, int * h )
+void view_port(int * x, int * y, int * w, int * h)
 {
-  SDL_GetWindowSize( window, w, h );
+  SDL_GetWindowSize(window, w, h);
 
-  if( *w > *h )
+  if (*w > *h)
     {
       *x = 0;
       *y = (*h - *w) / 2;
@@ -290,53 +290,51 @@ void view_port( int * x, int * y, int * w, int * h )
 void update_viewport()
 {
   int x, y, w, h;
-  view_port( &x, &y, &w, &h );
-  glViewport( x, y, w, h );
+  view_port(&x, &y, &w, &h);
+  glViewport(x, y, w, h);
 }
 
-void make_view_matrix( float * m )
+void make_view_matrix(float * m)
 {
   int x, y, w, h;
-  float z;
-  float
-    sc[ 9 ], tr[ 9 ], rs[ 9 ], pos[ 2 ] = { -view.x , -view.y };
+  float z, sc[9], tr[9], rs[9], pos[2] = {-view.x, -view.y};
 
-  view_port( &x, &y, &w, &h );
+  view_port(&x, &y, &w, &h);
   z = 2.f / w * view.zoom;
 
   /* Scale */
-  sc[ 0 ] =   z; sc[ 1 ] = 0.f; sc[ 2 ] = 0.f;
-  sc[ 3 ] = 0.f; sc[ 4 ] =   z; sc[ 5 ] = 0.f;
-  sc[ 6 ] = 0.f; sc[ 7 ] = 0.f; sc[ 8 ] = 1.f;
+  sc[0] =   z; sc[1] = 0.f; sc[2] = 0.f;
+  sc[3] = 0.f; sc[4] =   z; sc[5] = 0.f;
+  sc[6] = 0.f; sc[7] = 0.f; sc[8] = 1.f;
 
   /* Transform the view position with inverted rotation, so the view
      is moving regardless of rotation. */
-  transform( rotation_matrix( 1 ), pos );
+  transform(rotation_matrix(1), pos);
 
   /* Translation */
-  tr[ 0 ] =    1.f; tr[ 1 ] =    0.f; tr[ 2 ] = 0.f;
-  tr[ 3 ] =    0.f; tr[ 4 ] =    1.f; tr[ 5 ] = 0.f;
-  tr[ 6 ] = pos[0]; tr[ 7 ] = pos[1]; tr[ 8 ] = 1.f;
+  tr[0] =    1.f; tr[1] =    0.f; tr[2] = 0.f;
+  tr[3] =    0.f; tr[4] =    1.f; tr[5] = 0.f;
+  tr[6] = pos[0]; tr[7] = pos[1]; tr[8] = 1.f;
 
-  mat33mul( rs, sc, rotation_matrix( 0 ) );
-  mat33mul( m, tr, rs );
+  mat33mul(rs, sc, rotation_matrix(0));
+  mat33mul(m, tr, rs);
 }
 
-int check_status( void(*getfn)(GLuint, GLenum, GLint*),
-                  void(*logfn)(GLuint, GLsizei, GLsizei*, GLchar*),
-                  GLuint id,
-                  GLenum pname,
-                  const char * errmsg)
+int check_status(void(*getfn)(GLuint, GLenum, GLint*),
+                 void(*logfn)(GLuint, GLsizei, GLsizei*, GLchar*),
+                 GLuint id,
+                 GLenum pname,
+                 const char * errmsg)
 {
   GLint stat;
-  getfn( id, pname, &stat );
-  if( stat != GL_TRUE )
+  getfn(id, pname, &stat);
+  if (stat != GL_TRUE)
     {
       GLsizei loglen;
-      char log[ 1024 ];
+      char log[1024];
 
-      logfn( id, sizeof( log ), &loglen, log );
-      SDL_Log( "%s%s", errmsg, log );
+      logfn(id, sizeof( log ), &loglen, log);
+      SDL_Log("%s%s", errmsg, log);
       return 0;
     }
 
@@ -347,121 +345,121 @@ int use_shader()
 {
   GLuint sh;
 
-  shader_program = GL_CHECK( glCreateProgram() );
+  shader_program = GL_CHECK(glCreateProgram());
 
-  sh = GL_CHECK( glCreateShader( GL_VERTEX_SHADER ) );
+  sh = GL_CHECK(glCreateShader(GL_VERTEX_SHADER));
 
-  GL_CHECK( glShaderSource( sh, 1, &vertex_shader, NULL ) );
-  GL_CHECK( glCompileShader( sh ) );
-  if( !check_status( glGetShaderiv,
-                     glGetShaderInfoLog,
-                     sh,
-                     GL_COMPILE_STATUS,
-                     "Vertex shader compilation failed:\n") )
+  GL_CHECK(glShaderSource(sh, 1, &vertex_shader, NULL));
+  GL_CHECK(glCompileShader(sh ));
+  if (!check_status(glGetShaderiv,
+                    glGetShaderInfoLog,
+                    sh,
+                    GL_COMPILE_STATUS,
+                    "Vertex shader compilation failed:\n"))
     return 0;
 
-  GL_CHECK( glAttachShader( shader_program, sh ) );
+  GL_CHECK(glAttachShader(shader_program, sh));
 
-  sh = GL_CHECK( glCreateShader( GL_FRAGMENT_SHADER ) );
+  sh = GL_CHECK(glCreateShader(GL_FRAGMENT_SHADER));
 
-  GL_CHECK( glShaderSource( sh, 1, &fragment_shader, NULL ) );
-  GL_CHECK( glCompileShader( sh ) );
-  if( !check_status( glGetShaderiv,
-                     glGetShaderInfoLog,
-                     sh,
-                     GL_COMPILE_STATUS,
-                     "Fragment shader compilation failed:\n") )
+  GL_CHECK(glShaderSource(sh, 1, &fragment_shader, NULL));
+  GL_CHECK(glCompileShader(sh ));
+  if (!check_status(glGetShaderiv,
+                    glGetShaderInfoLog,
+                    sh,
+                    GL_COMPILE_STATUS,
+                    "Fragment shader compilation failed:\n"))
     return 0;
 
-  GL_CHECK( glAttachShader( shader_program, sh ) );
+  GL_CHECK(glAttachShader(shader_program, sh));
 
-  GL_CHECK( glLinkProgram( shader_program ) );
-  if( !check_status( glGetProgramiv,
-                     glGetProgramInfoLog,
-                     shader_program,
-                     GL_LINK_STATUS,
-                     "Shader program link failed:\n" ) )
+  GL_CHECK(glLinkProgram(shader_program));
+  if (!check_status(glGetProgramiv,
+                    glGetProgramInfoLog,
+                    shader_program,
+                    GL_LINK_STATUS,
+                    "Shader program link failed:\n"))
     return 0;
 
   attrib_position =
-    GL_CHECK( glGetAttribLocation( shader_program, "position" ) );
+    GL_CHECK(glGetAttribLocation(shader_program, "position"));
   attrib_texposition =
-    GL_CHECK( glGetAttribLocation( shader_program, "texposition" ) );
+    GL_CHECK(glGetAttribLocation(shader_program, "texposition"));
   uniform_view =
-    GL_CHECK( glGetUniformLocation( shader_program, "view" ) );
+    GL_CHECK(glGetUniformLocation(shader_program, "view"));
   uniform_sampler =
-    GL_CHECK( glGetUniformLocation( shader_program, "sampler" ) );
+    GL_CHECK(glGetUniformLocation(shader_program, "sampler"));
 
-  GL_CHECK( glUseProgram( shader_program ) );
+  GL_CHECK(glUseProgram(shader_program));
 
-  GL_CHECK( glUniform1i( uniform_sampler, 0) );
+  GL_CHECK(glUniform1i(uniform_sampler, 0));
 
   return 1;
 }
 
-int load_texture( SDL_Surface * surface )
+int load_texture(SDL_Surface * surface)
 {
   static GLuint texture = -1;
 
-  if( !surface )
+  if (!surface)
     {
       texture = -1;
       return 1;
     }
 
-  if( surface->format->format != SDL_PIXELFORMAT_RGB24 )
+  if (surface->format->format != SDL_PIXELFORMAT_RGB24)
     {
-      SDL_Log( "Surface pixel fromat is 0x%x,"
-               " but only SDL_PIXELFORMAT_RGB24, 0x%x is supported.",
-               surface->format->format, SDL_PIXELFORMAT_RGB24 );
+      SDL_Log("Surface pixel fromat is 0x%x,"
+              " but only SDL_PIXELFORMAT_RGB24, 0x%x is supported.",
+              surface->format->format, SDL_PIXELFORMAT_RGB24);
       return 0;
     }
 
-  if( texture >= 0 )
+  if (texture >= 0)
     {
-      GL_CHECK( glDeleteTextures( 1, &texture ) );
+      GL_CHECK(glDeleteTextures(1, &texture));
     }
 
-  GL_CHECK( glGenTextures( 1, &texture ) );
-  GL_CHECK( glBindTexture( GL_TEXTURE_2D, texture ) );
+  GL_CHECK(glGenTextures(1, &texture));
+  GL_CHECK(glBindTexture(GL_TEXTURE_2D, texture));
 
-  GL_CHECK( glTexParameteri( GL_TEXTURE_2D,
-                             GL_TEXTURE_MIN_FILTER,
-                             GL_LINEAR_MIPMAP_LINEAR ) );
-  GL_CHECK( glTexParameteri( GL_TEXTURE_2D,
-                             GL_TEXTURE_MAG_FILTER,
-                             GL_LINEAR ) );
-  GL_CHECK( glTexParameteri( GL_TEXTURE_2D,
-                             GL_TEXTURE_WRAP_S,
-                             GL_CLAMP_TO_EDGE ) );
-  GL_CHECK( glTexParameteri( GL_TEXTURE_2D,
-                             GL_TEXTURE_WRAP_T,
-                             GL_CLAMP_TO_EDGE ) );
+  GL_CHECK(glTexParameteri(GL_TEXTURE_2D,
+                           GL_TEXTURE_MIN_FILTER,
+                           GL_LINEAR_MIPMAP_LINEAR));
+  GL_CHECK(glTexParameteri(GL_TEXTURE_2D,
+                           GL_TEXTURE_MAG_FILTER,
+                           GL_LINEAR));
+  GL_CHECK(glTexParameteri(GL_TEXTURE_2D,
+                           GL_TEXTURE_WRAP_S,
+                           GL_CLAMP_TO_EDGE));
+  GL_CHECK(glTexParameteri(GL_TEXTURE_2D,
+                           GL_TEXTURE_WRAP_T,
+                           GL_CLAMP_TO_EDGE));
 
-  GL_CHECK( glTexImage2D( GL_TEXTURE_2D,
-                          0,
-                          GL_RGB,
-                          surface->w,
-                          surface->h,
-                          0,
-                          GL_RGB,
-                          GL_UNSIGNED_BYTE,
-                          surface->pixels ) );
+  GL_CHECK(glTexImage2D(GL_TEXTURE_2D,
+                        0,
+                        GL_RGB,
+                        surface->w,
+                        surface->h,
+                        0,
+                        GL_RGB,
+                        GL_UNSIGNED_BYTE,
+                        surface->pixels));
 
-  GL_CHECK( glGenerateMipmap( GL_TEXTURE_2D ) );
+  GL_CHECK(glGenerateMipmap(GL_TEXTURE_2D));
 
   return 1;
 }
 
 void free_render()
 {
-  if( shader_program )
+  if (shader_program)
     {
-      glDeleteProgram( shader_program );
+      glDeleteProgram(shader_program);
       shader_program = 0;
     }
 
-  load_texture( NULL );
+  load_texture(NULL);
 
   IMG_Quit();
 }
@@ -470,72 +468,72 @@ int init_render()
 {
   update_viewport();
 
-  glClearColor( 0.0, 0.0, 0.0, 1.0 );
+  glClearColor(0.0, 0.0, 0.0, 1.0);
 
   view.x = view.y = 0.f;
   view.zoom = 1.f;
   view.rotate = 0.f;
 
-  if( !use_shader() )
+  if (!use_shader())
     {
       free_render();
       return 0;
     }
 
-  if( !IMG_Init( IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF | IMG_INIT_WEBP ) )
+  if (!IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_TIF | IMG_INIT_WEBP))
     {
       free_render();
       return 0;
     }
 
-  GL_CHECK( glEnableVertexAttribArray( attrib_position ) );
-  GL_CHECK( glEnableVertexAttribArray( attrib_texposition ) );
-  GL_CHECK( glVertexAttribPointer( attrib_position,
-                                   2,
-                                   GL_FLOAT,
-                                   GL_FALSE,
-                                   0,
-                                   vertex_array( 1, 1 )));
+  GL_CHECK(glEnableVertexAttribArray(attrib_position));
+  GL_CHECK(glEnableVertexAttribArray(attrib_texposition));
+  GL_CHECK(glVertexAttribPointer(attrib_position,
+                                 2,
+                                 GL_FLOAT,
+                                 GL_FALSE,
+                                 0,
+                                 vertex_array(1, 1)));
 
-  GL_CHECK( glVertexAttribPointer( attrib_texposition,
-                                   2,
-                                   GL_FLOAT,
-                                   GL_FALSE,
-                                   0,
-                                   tex_vertices ));
+  GL_CHECK(glVertexAttribPointer(attrib_texposition,
+                                 2,
+                                 GL_FLOAT,
+                                 GL_FALSE,
+                                 0,
+                                 tex_vertices));
   return 1;
 }
 
 int render()
 {
-  float m[ 9 ];
-  make_view_matrix( m );
-  GL_CHECK( glUniformMatrix3fv( uniform_view, 1, GL_FALSE, m ) );
+  float m[9];
+  make_view_matrix(m);
+  GL_CHECK(glUniformMatrix3fv(uniform_view, 1, GL_FALSE, m));
 
-  GL_CHECK( glClear( GL_COLOR_BUFFER_BIT ) );
+  GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
 
-  GL_CHECK( glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 ) );
+  GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
-  SDL_GL_SwapWindow( window );
+  SDL_GL_SwapWindow(window);
 
   return 1;
 }
 
-int load_image( const char * file )
+int load_image(const char * file)
 {
-  SDL_Surface * surface = IMG_Load( file );
-  if( !surface )
+  SDL_Surface * surface = IMG_Load(file);
+  if (!surface)
     {
-      SDL_Log( "Couldn't load image: %s\n", file );
+      SDL_Log("Couldn't load image: %s\n", file);
       return 0;
     }
 
-  if( !load_texture( surface ) )
+  if (!load_texture(surface))
     return 0;
 
-  vertex_array( surface->w, surface->h );
+  vertex_array(surface->w, surface->h);
 
-  SDL_FreeSurface( surface );
+  SDL_FreeSurface(surface);
 
   return 1;
 }
