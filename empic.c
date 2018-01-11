@@ -57,6 +57,13 @@ void cleanup_and_quit()
   SDL_Quit();
 }
 
+static void set_title( char * name )
+{
+  char str[ 256 ];
+  snprintf( str, sizeof( str ), "%s - Empic", name );
+  SDL_SetWindowTitle( window, str );
+}
+
 void load_next_image()
 {
   int n = files_list.current;
@@ -65,6 +72,7 @@ void load_next_image()
     if( load_image( files_list.names[ ++n ] ) )
       {
         files_list.current = n;
+        set_title( files_list.names[ n ] );
         return;
       }
 }
@@ -77,6 +85,7 @@ void load_prev_image()
     if( load_image( files_list.names[ --n ] ) )
       {
         files_list.current = n;
+        set_title( files_list.names[ n ] );
         return;
       }
 }
