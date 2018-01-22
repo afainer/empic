@@ -15,8 +15,10 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with Empic.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include <string.h>
 #include <SDL2/SDL.h>
 
+#include "command.h"
 #include "render.h"
 
 SDL_Window * window = NULL;
@@ -53,6 +55,7 @@ void destroy_window()
 
 void cleanup_and_quit()
 {
+  stop_read_commands();
   destroy_window();
   SDL_Quit();
 }
@@ -188,12 +191,58 @@ void process_events()
         process_key_event(&event);
       break;
     }
+
+  if (event.type == command_event_id &&
+      !exec_command((struct cmdarg *)event.user.data1))
+    do_render = 1;
+}
+
+int zoom_cmd(char * cmd, struct cmdarg * args)
+{
+  if (is_empty_arg(args))
+    {
+      SDL_Log("%s: the command requires an argument", cmd);
+      return -1;
+    }
+
+  if (args[0].type == FLOAT)
+    {
+      zoom_view_frac(args[0].f);
+      return 0;
+    }
+
+  if (args[0].type != STRING)
+    {
+      SDL_Log("%s: wrong argument type", cmd);
+      return -1;
+    }
+
+  if (!strcmp(args[0].s, "in"))
+    zoom_view_frac(1.1f);
+  else if (!strcmp(args[0].s, "out"))
+    zoom_view_frac(0.9f);
+  else
+    {
+      SDL_Log("%s: wrong argument: `%s', should be `in' or `out'",
+              cmd, args[0].s);
+      return -1;
+    }
+
+  return 0;
 }
 
 int main(int argc, char ** argv)
 {
   if (argc < 2)
     return 0;
+
+  if (argv[1][0] == '-' && argv[1][1] == 'e')
+    {
+      register_command("zoom", zoom_cmd);
+      start_read_commands();
+      argv += 1;
+      argc -= 1;
+    }
 
   if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {

@@ -1,6 +1,6 @@
 CFLAGS = $(shell sdl2-config --cflags) -Wall -O0
 LIBS = -lm -lGL $(shell sdl2-config --libs) -lSDL2_image
-SRC = empic.c render.c
+SRC = command.c empic.c render.c
 
 all: empic
 
