@@ -15,6 +15,9 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with Empic.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef COMMAND_H
+#define COMMAND_H
+
 #include <SDL_types.h>
 
 #define COMMAND_NAME_SIZE 32
@@ -55,3 +58,5 @@ int start_read_commands();
 void stop_read_commands();
 
 int exec_command(struct cmdarg * args);
+
+#endif /* COMMAND_H */

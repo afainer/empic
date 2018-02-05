@@ -15,6 +15,9 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with Empic.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef RENDER_H
+#define RENDER_H
+
 typedef enum {
   ZOOM_FIT,
   ZOOM_FIT_BIG,
@@ -36,3 +39,5 @@ int init_render();
 int render();
 
 int load_image(const char * file);
+
+#endif /* RENDER_H */

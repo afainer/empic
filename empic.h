@@ -15,8 +15,13 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with Empic.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef EMPIC_H
+#define EMPIC_H
+
 extern SDL_Window * empic_window;
 
 void load_next_image();
 void load_prev_image();
 void empic_quit();
+
+#endif /* EMPIC_H */

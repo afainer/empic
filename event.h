@@ -15,5 +15,10 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with Empic.  If not, see <http://www.gnu.org/licenses/>. */
 
+#ifndef EVENT_H
+#define EVENT_H
+
 void wait_event();
 void set_emacs_mode(int mode);
+
+#endif /* EVENT_H */
