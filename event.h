@@ -1,4 +1,4 @@
-/* Copyright (C) 2016 Andrey Fainer <fandrey@gmx.com>
+/* Copyright (C) 2016-2018 Andrey Fainer <fandrey@gmx.com>
 
 This file is part of Empic.
 
