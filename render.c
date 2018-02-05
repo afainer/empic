@@ -22,8 +22,7 @@ along with Empic.  If not, see <http://www.gnu.org/licenses/>. */
 #include <SDL2/SDL_image.h>
 
 #include "render.h"
-
-extern SDL_Window * window;
+#include "empic.h"
 
 static GLuint shader_program = 0;
 static const char * vertex_shader =
@@ -177,7 +176,7 @@ void move_view(float x, float y)
   int w, h;
   float w2, h2, imagew, imageh;
 
-  SDL_GetWindowSize(window, &w, &h);
+  SDL_GetWindowSize(empic_window, &w, &h);
   bbox_size(&imagew, &imageh);
 
   w2 = w / 2.f / view.zoom;
@@ -224,7 +223,7 @@ void zoom_view_fit(zoom_fit_t fit)
   int w, h;
   float z = view.zoom, imagew, imageh;
 
-  SDL_GetWindowSize(window, &w, &h);
+  SDL_GetWindowSize(empic_window, &w, &h);
 
   bbox_size(&imagew, &imageh);
 
@@ -271,7 +270,7 @@ void rotate_view_delta(float angle)
 
 void view_port(int * x, int * y, int * w, int * h)
 {
-  SDL_GetWindowSize(window, w, h);
+  SDL_GetWindowSize(empic_window, w, h);
 
   if (*w > *h)
     {
@@ -287,11 +286,14 @@ void view_port(int * x, int * y, int * w, int * h)
     }
 }
 
+void update_render();
+
 void update_viewport()
 {
   int x, y, w, h;
   view_port(&x, &y, &w, &h);
   glViewport(x, y, w, h);
+  update_render();
 }
 
 void make_view_matrix(float * m)
@@ -504,7 +506,10 @@ int init_render()
   return 1;
 }
 
-int render()
+static int render_nop() { return 1; }
+static int (*render_fn)();
+
+static int render_image()
 {
   float m[9];
   make_view_matrix(m);
@@ -514,9 +519,22 @@ int render()
 
   GL_CHECK(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
-  SDL_GL_SwapWindow(window);
+  SDL_GL_SwapWindow(empic_window);
 
   return 1;
+}
+
+int render()
+{
+  int r = render_fn();
+  render_fn = render_nop;
+
+  return r;
+}
+
+void update_render()
+{
+  render_fn = render_image;
 }
 
 int load_image(const char * file)

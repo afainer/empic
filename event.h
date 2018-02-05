@@ -15,24 +15,5 @@ for more details.
 You should have received a copy of the GNU General Public License
 along with Empic.  If not, see <http://www.gnu.org/licenses/>. */
 
-typedef enum {
-  ZOOM_FIT,
-  ZOOM_FIT_BIG,
-  ZOOM_FIT_SMALL
-} zoom_fit_t;
-
-void move_view(float x, float y);
-void move_view_delta(float x, float y);
-void zoom_view(float z);
-void zoom_view_frac(float z);
-void zoom_view_fit(zoom_fit_t fit);
-void rotate_view(float angle);
-void rotate_view_delta(float angle);
-
-void update_viewport();
-void update_render();
-
-int init_render();
-int render();
-
-int load_image(const char * file);
+void wait_event();
+void set_emacs_mode(int mode);
