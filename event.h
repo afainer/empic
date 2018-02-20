@@ -20,5 +20,6 @@ along with Empic.  If not, see <http://www.gnu.org/licenses/>. */
 
 void wait_event();
 void set_emacs_mode(int mode);
+void register_commands();
 
 #endif /* EVENT_H */

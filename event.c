@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with Empic.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <SDL_events.h>
+#include <SDL_log.h>
 
 #include "command.h"
 #include "render.h"
@@ -34,6 +35,40 @@ static void process_window_event(SDL_Event * event)
     case SDL_WINDOWEVENT_SIZE_CHANGED:
       update_viewport();
     }
+}
+
+int zoom_cmd(char * cmd, struct cmdarg * args)
+{
+  if (is_empty_arg(args))
+    {
+      SDL_Log("%s: the command requires an argument", cmd);
+      return -1;
+    }
+
+  if (args[0].type == FLOAT)
+    {
+      zoom_view_frac(args[0].f);
+      return 0;
+    }
+
+  if (args[0].type != STRING)
+    {
+      SDL_Log("%s: wrong argument type", cmd);
+      return -1;
+    }
+
+  if (!strcmp(args[0].s, "in"))
+    zoom_view_frac(1.1f);
+  else if (!strcmp(args[0].s, "out"))
+    zoom_view_frac(0.9f);
+  else
+    {
+      SDL_Log("%s: wrong argument: `%s', should be `in' or `out'",
+              cmd, args[0].s);
+      return -1;
+    }
+
+  return 0;
 }
 
 static void process_key_event(SDL_Event * event)
@@ -107,13 +142,131 @@ static void process_event(SDL_Event * event)
     process_key_event(event);
 }
 
+/* SDL to Emacs key names */
+static struct sdl_to_emacs_t
+{
+  const char * sdl, * emacs;
+} sdl_to_emacs[74];
+
+static void init_sdl_to_emacs()
+{
+  struct sdl_to_emacs_t * p = sdl_to_emacs;
+
+#define SET(CODE, KEY)                                                  \
+  p->sdl = SDL_GetScancodeName(SDL_SCANCODE_ ## CODE); p->emacs = KEY; p++
+
+  SET(A, "a");
+  SET(B, "b");
+  SET(C, "c");
+  SET(D, "d");
+  SET(E, "e");
+  SET(F, "f");
+  SET(G, "g");
+  SET(H, "h");
+  SET(I, "i");
+  SET(J, "j");
+  SET(K, "k");
+  SET(L, "l");
+  SET(M, "m");
+  SET(N, "n");
+  SET(O, "o");
+  SET(P, "p");
+  SET(Q, "q");
+  SET(R, "r");
+  SET(S, "s");
+  SET(T, "t");
+  SET(U, "u");
+  SET(V, "v");
+  SET(W, "w");
+  SET(X, "x");
+  SET(Y, "y");
+  SET(Z, "z");
+  SET(RETURN, "<return>");
+  SET(ESCAPE, "<escape>");
+  SET(BACKSPACE, "<backspace>");
+  SET(TAB, "<tab>");
+  SET(SPACE, "<space>");
+  SET(CAPSLOCK, "CapsLock");
+  SET(F1, "<f1>");
+  SET(F2, "<f2>");
+  SET(F3, "<f3>");
+  SET(F4, "<f4>");
+  SET(F5, "<f5>");
+  SET(F6, "<f6>");
+  SET(F7, "<f7>");
+  SET(F8, "<f8>");
+  SET(F9, "<f9>");
+  SET(F10, "<f10>");
+  SET(F11, "<f11>");
+  SET(F12, "<f12>");
+  SET(PRINTSCREEN, "<print>");
+  SET(SCROLLLOCK, "<scroll_lock>");
+  SET(PAUSE, "<pause>");
+  SET(INSERT, "<insert>");
+  SET(HOME, "<home>");
+  SET(PAGEUP, "<prior>");
+  SET(DELETE, "<delete>");
+  SET(END, "<end>");
+  SET(PAGEDOWN, "<next>");
+  SET(RIGHT, "<right>");
+  SET(LEFT, "<left>");
+  SET(DOWN, "<down>");
+  SET(UP, "<up>");
+  SET(NUMLOCKCLEAR, "<numlock>");
+  SET(KP_DIVIDE, "<kp-divide>");
+  SET(KP_MULTIPLY, "<kp-multiply>");
+  SET(KP_MINUS,"<kp-substract>");
+  SET(KP_PLUS,"<kp-add>");
+  SET(KP_ENTER,"<kp-enter>");
+  SET(KP_1, "<kp-1>");
+  SET(KP_2, "<kp-2>");
+  SET(KP_3, "<kp-3>");
+  SET(KP_4, "<kp-4>");
+  SET(KP_5, "<kp-5>");
+  SET(KP_6, "<kp-6>");
+  SET(KP_7, "<kp-7>");
+  SET(KP_8, "<kp-8>");
+  SET(KP_9, "<kp-9>");
+  SET(KP_0, "<kp-0>");
+  SET(KP_PERIOD, "<kp-decimal>");
+
+#undef SET
+}
+
 static void process_event_emacs(SDL_Event * event)
 {
   if (event->type == command_event_id)
     exec_command((struct cmdarg *)event->user.data1);
   else if (event->type == SDL_KEYDOWN)
-    /* TODO Send the key event to Emacs */
-    ;
+    {
+      int i;
+      const char * name;
+      static char mod[10];
+        mod[0] = '\0';
+
+      if (event->key.keysym.scancode >= SDL_SCANCODE_LCTRL &&
+          event->key.keysym.scancode <= SDL_SCANCODE_RGUI)
+        return;
+
+      if (event->key.keysym.mod & KMOD_CTRL)
+        strcat(mod, "C-");
+      if (event->key.keysym.mod & KMOD_GUI)
+        strcat(mod, "M-");
+      if (event->key.keysym.mod & KMOD_ALT)
+        strcat(mod, "A-");
+      if (event->key.keysym.mod & KMOD_SHIFT)
+        strcat(mod, "S-");
+
+      name = SDL_GetScancodeName(event->key.keysym.scancode);
+      for (i = 0; i < sizeof(sdl_to_emacs) / sizeof(struct sdl_to_emacs_t); i++)
+        if (name == sdl_to_emacs[i].sdl)
+          {
+            name = sdl_to_emacs[i].emacs;
+            break;
+          }
+
+      printf("%s%s\n", mod, name);
+    }
 }
 
 static void (*process_event_fn)(SDL_Event * event) = process_event;
@@ -140,4 +293,12 @@ void wait_event()
 void set_emacs_mode(int mode)
 {
   process_event_fn = mode ? process_event_emacs : process_event;
+
+  if (mode)
+    init_sdl_to_emacs();
+}
+
+void register_commands()
+{
+  register_command("zoom", zoom_cmd);
 }
