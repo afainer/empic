@@ -68,6 +68,14 @@ int zoom_cmd(char * cmd, struct cmdarg * args)
       return -1;
     }
 
+  update_render();
+
+  return 0;
+}
+
+int quit_cmd(char * cmd, struct cmdarg * args)
+{
+  empic_quit();
   return 0;
 }
 
@@ -215,7 +223,7 @@ static void init_sdl_to_emacs()
   SET(NUMLOCKCLEAR, "<numlock>");
   SET(KP_DIVIDE, "<kp-divide>");
   SET(KP_MULTIPLY, "<kp-multiply>");
-  SET(KP_MINUS,"<kp-substract>");
+  SET(KP_MINUS,"<kp-subtract>");
   SET(KP_PLUS,"<kp-add>");
   SET(KP_ENTER,"<kp-enter>");
   SET(KP_1, "<kp-1>");
@@ -266,6 +274,7 @@ static void process_event_emacs(SDL_Event * event)
           }
 
       printf("%s%s\n", mod, name);
+      fflush(stdout);
     }
 }
 
@@ -301,4 +310,5 @@ void set_emacs_mode(int mode)
 void register_commands()
 {
   register_command("zoom", zoom_cmd);
+  register_command("quit", quit_cmd);
 }
