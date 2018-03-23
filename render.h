@@ -40,4 +40,6 @@ int render();
 
 int load_image(const char * file);
 
+void register_render_commands();
+
 #endif /* RENDER_H */

@@ -100,6 +100,17 @@ void empic_quit()
   quit = 1;
 }
 
+int quit_cmd(char * cmd, struct cmdarg * args)
+{
+  empic_quit();
+  return 0;
+}
+
+void register_empic_commands()
+{
+  register_command("quit", quit_cmd);
+}
+
 int main(int argc, char ** argv)
 {
   if (argc < 2)
@@ -108,7 +119,8 @@ int main(int argc, char ** argv)
   if (argv[1][0] == '-' && argv[1][1] == 'e')
     {
       set_emacs_mode(1);
-      register_commands();
+      register_render_commands();
+      register_empic_commands();
       start_read_commands();
       argv += 1;
       argc -= 1;
@@ -149,6 +161,9 @@ int main(int argc, char ** argv)
   key.type = SDL_KEYDOWN;
   key.key.keysym.sym = SDLK_0;
   key.key.keysym.scancode = SDL_SCANCODE_0;
+  SDL_PushEvent(&key);
+  key.key.keysym.sym = SDLK_KP_0;
+  key.key.keysym.scancode = SDL_SCANCODE_KP_0;
   SDL_PushEvent(&key);
 
   while (!quit)

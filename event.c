@@ -37,48 +37,6 @@ static void process_window_event(SDL_Event * event)
     }
 }
 
-int zoom_cmd(char * cmd, struct cmdarg * args)
-{
-  if (is_empty_arg(args))
-    {
-      SDL_Log("%s: the command requires an argument", cmd);
-      return -1;
-    }
-
-  if (args[0].type == FLOAT)
-    {
-      zoom_view_frac(args[0].f);
-      return 0;
-    }
-
-  if (args[0].type != STRING)
-    {
-      SDL_Log("%s: wrong argument type", cmd);
-      return -1;
-    }
-
-  if (!strcmp(args[0].s, "in"))
-    zoom_view_frac(1.1f);
-  else if (!strcmp(args[0].s, "out"))
-    zoom_view_frac(0.9f);
-  else
-    {
-      SDL_Log("%s: wrong argument: `%s', should be `in' or `out'",
-              cmd, args[0].s);
-      return -1;
-    }
-
-  update_render();
-
-  return 0;
-}
-
-int quit_cmd(char * cmd, struct cmdarg * args)
-{
-  empic_quit();
-  return 0;
-}
-
 static void process_key_event(SDL_Event * event)
 {
   switch (event->key.keysym.sym)
@@ -305,10 +263,4 @@ void set_emacs_mode(int mode)
 
   if (mode)
     init_sdl_to_emacs();
-}
-
-void register_commands()
-{
-  register_command("zoom", zoom_cmd);
-  register_command("quit", quit_cmd);
 }

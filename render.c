@@ -21,6 +21,7 @@ along with Empic.  If not, see <http://www.gnu.org/licenses/>. */
 #include <SDL2/SDL_opengles2.h>
 #include <SDL2/SDL_image.h>
 
+#include "command.h"
 #include "render.h"
 #include "empic.h"
 
@@ -554,4 +555,132 @@ int load_image(const char * file)
   SDL_FreeSurface(surface);
 
   return 1;
+}
+
+int zoom_cmd(char * cmd, struct cmdarg * args)
+{
+  if (is_empty_arg(args))
+    {
+      SDL_Log("%s: the command requires an argument", cmd);
+      return -1;
+    }
+
+  if (args[0].type == FLOAT)
+    {
+      zoom_view(args[0].f);
+      update_render();
+      return 0;
+    }
+
+  if (args[0].type != STRING)
+    {
+      SDL_Log("%s: wrong argument type", cmd);
+      return -1;
+    }
+
+  if (!strcmp(args[0].s, "in"))
+    zoom_view_frac(1.1f);
+  else if (!strcmp(args[0].s, "out"))
+    zoom_view_frac(0.9f);
+  else if (!strcmp(args[0].s, "fit-big"))
+    zoom_view_fit(ZOOM_FIT_BIG);
+  else if (!strcmp(args[0].s, "fit-small"))
+    zoom_view_fit(ZOOM_FIT_SMALL);
+  else if (!strcmp(args[0].s, "frac"))
+    {
+      if (is_empty_arg(args + 1))
+        {
+          SDL_Log("%s: `%s' requires an argument", cmd, args[0].s);
+          return -1;
+        }
+
+      zoom_view_frac(args[1].f);
+    }
+  else
+    {
+      SDL_Log("%s: wrong argument: `%s', should be one of `in', `out',"
+              " `fit-big', `fit-small', `frac' <float>",
+              cmd, args[0].s);
+      return -1;
+    }
+
+  update_render();
+  return 0;
+}
+
+int rotate_cmd(char * cmd, struct cmdarg * args)
+{
+  if (is_empty_arg(args))
+    {
+      SDL_Log("%s: the command requires an argument", cmd);
+      return -1;
+    }
+
+  if (args[0].type == FLOAT)
+    {
+      rotate_view(args[0].f);
+      update_render();
+      return 0;
+    }
+
+  if (args[0].type != STRING)
+    {
+      SDL_Log("%s: wrong argument type", cmd);
+      return -1;
+    }
+
+  if (!strcmp(args[0].s, "top"))
+    rotate_view(0.0f);
+  else if (!strcmp(args[0].s, "left"))
+    rotate_view(-90.0f);
+  else if (!strcmp(args[0].s, "right"))
+    rotate_view(90.0f);
+  else if (!strcmp(args[0].s, "bottom"))
+    rotate_view(180.0f);
+  else if (!strcmp(args[0].s, "delta"))
+    {
+      if (is_empty_arg(args + 1))
+        {
+          SDL_Log("%s: `%s' requires an argument", cmd, args[0].s);
+          return -1;
+        }
+
+      rotate_view_delta(args[1].f);
+    }
+  else
+    {
+      SDL_Log("%s: wrong argument: `%s', should be one of `top', `left',"
+              " `right', `bottom', `delta' <float>",
+              cmd, args[0].s);
+      return -1;
+    }
+
+  update_render();
+  return 0;
+}
+
+int move_cmd(char * cmd, struct cmdarg * args)
+{
+  if (is_empty_arg(args) || is_empty_arg(args + 1))
+    {
+      SDL_Log("%s: the command requires two arguments", cmd);
+      return -1;
+    }
+
+  if (args[0].type != FLOAT || args[1].type != FLOAT)
+    {
+      SDL_Log("%s: wrong argument type", cmd);
+      return -1;
+    }
+
+  move_view_delta(args[0].f, args[1].f);
+  update_render();
+  return 0;
+}
+
+void register_render_commands()
+{
+  register_command("zoom", zoom_cmd);
+  register_command("rotate", rotate_cmd);
+  register_command("move", move_cmd);
 }
