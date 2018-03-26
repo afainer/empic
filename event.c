@@ -202,7 +202,7 @@ static void init_sdl_to_emacs()
 static void process_event_emacs(SDL_Event * event)
 {
   if (event->type == command_event_id)
-    exec_command((struct cmdarg *)event->user.data1);
+    exec_command((char **)event->user.data1);
   else if (event->type == SDL_KEYDOWN)
     {
       int i;

@@ -22,22 +22,7 @@ along with Empic.  If not, see <http://www.gnu.org/licenses/>. */
 
 #define COMMAND_NAME_SIZE 32
 
-struct cmdarg
-{
-  enum
-    {
-      STRING = 0,
-      FLOAT,
-    } type;
-
-  union
-  {
-    char * s;
-    float f;
-  };
-};
-
-typedef int (*cmdfn)(char * cmd, struct cmdarg * args);
+typedef int (*cmdfn)(char * cmd, char ** args);
 
 struct command
 {
@@ -45,18 +30,32 @@ struct command
   cmdfn fn;
 };
 
-inline static int is_empty_arg(struct cmdarg * arg)
-{
-  return arg->type == STRING && !arg->s;
-}
-
 extern Uint32 command_event_id;
+
+float argtof(char * arg, int * error);
 
 void register_command(char * name, cmdfn fn);
 
 int start_read_commands();
 void stop_read_commands();
 
-int exec_command(struct cmdarg * args);
+int exec_command(char ** args);
+
+#define ASSERT_ARGS(CMD, ARGS, MSG)                             \
+  if (!(ARGS)[0])                                               \
+    {                                                           \
+      SDL_Log("%s: " MSG, CMD);                                 \
+      return -1;                                                \
+    }
+
+#define ASSERT_ARGS1(CMD, ARGS)                                 \
+  ASSERT_ARGS(CMD, ARGS, "the command requires an argument")
+
+#define ASSERT_ARGS2(CMD, ARGS)                                 \
+  if (!(ARGS)[0] || !(ARGS)[1])                                 \
+    {                                                           \
+      SDL_Log("%s: the command requires two arguments", CMD);   \
+      return -1;                                                \
+    }
 
 #endif /* COMMAND_H */

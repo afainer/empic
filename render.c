@@ -557,123 +557,117 @@ int load_image(const char * file)
   return 1;
 }
 
-int zoom_cmd(char * cmd, struct cmdarg * args)
+int zoom_cmd(char * cmd, char ** args)
 {
-  if (is_empty_arg(args))
-    {
-      SDL_Log("%s: the command requires an argument", cmd);
-      return -1;
-    }
+  int err;
+  float f;
 
-  if (args[0].type == FLOAT)
-    {
-      zoom_view(args[0].f);
-      update_render();
-      return 0;
-    }
+  ASSERT_ARGS1(cmd, args);
 
-  if (args[0].type != STRING)
-    {
-      SDL_Log("%s: wrong argument type", cmd);
-      return -1;
-    }
-
-  if (!strcmp(args[0].s, "in"))
+  if (!strcmp(args[0], "in"))
     zoom_view_frac(1.1f);
-  else if (!strcmp(args[0].s, "out"))
+  else if (!strcmp(args[0], "out"))
     zoom_view_frac(0.9f);
-  else if (!strcmp(args[0].s, "fit-big"))
+  else if (!strcmp(args[0], "fit-big"))
     zoom_view_fit(ZOOM_FIT_BIG);
-  else if (!strcmp(args[0].s, "fit-small"))
+  else if (!strcmp(args[0], "fit-small"))
     zoom_view_fit(ZOOM_FIT_SMALL);
-  else if (!strcmp(args[0].s, "frac"))
+  else if (!strcmp(args[0], "frac"))
     {
-      if (is_empty_arg(args + 1))
+      ASSERT_ARGS(cmd, args + 1, "`frac' requires an argument");
+
+      f = argtof(args[1], &err);
+      if (err)
         {
-          SDL_Log("%s: `%s' requires an argument", cmd, args[0].s);
+          SDL_Log("%s: Can't convert '%s' to float", cmd, args[1]);
           return -1;
         }
 
-      zoom_view_frac(args[1].f);
+      zoom_view_frac(f);
     }
   else
     {
-      SDL_Log("%s: wrong argument: `%s', should be one of `in', `out',"
-              " `fit-big', `fit-small', `frac' <float>",
-              cmd, args[0].s);
-      return -1;
+      f = argtof(args[0], &err);
+
+      if (err)
+        {
+          SDL_Log("%s: wrong argument: `%s', should be one of <float>, "
+                  "`in', `out', `fit-big', `fit-small', `frac' <float>",
+                  cmd, args[0]);
+          return -1;
+        }
+
+      zoom_view(f);
     }
 
   update_render();
   return 0;
 }
 
-int rotate_cmd(char * cmd, struct cmdarg * args)
+int rotate_cmd(char * cmd, char ** args)
 {
-  if (is_empty_arg(args))
-    {
-      SDL_Log("%s: the command requires an argument", cmd);
-      return -1;
-    }
+  int err;
+  float f;
 
-  if (args[0].type == FLOAT)
-    {
-      rotate_view(args[0].f);
-      update_render();
-      return 0;
-    }
+  ASSERT_ARGS1(cmd, args);
 
-  if (args[0].type != STRING)
-    {
-      SDL_Log("%s: wrong argument type", cmd);
-      return -1;
-    }
-
-  if (!strcmp(args[0].s, "top"))
+  if (!strcmp(args[0], "top"))
     rotate_view(0.0f);
-  else if (!strcmp(args[0].s, "left"))
+  else if (!strcmp(args[0], "left"))
     rotate_view(-90.0f);
-  else if (!strcmp(args[0].s, "right"))
+  else if (!strcmp(args[0], "right"))
     rotate_view(90.0f);
-  else if (!strcmp(args[0].s, "bottom"))
+  else if (!strcmp(args[0], "bottom"))
     rotate_view(180.0f);
-  else if (!strcmp(args[0].s, "delta"))
+  else if (!strcmp(args[0], "delta"))
     {
-      if (is_empty_arg(args + 1))
+      ASSERT_ARGS(cmd, args + 1, "`delta' requires an argument");
+
+      f = argtof(args[1], &err);
+      if (err)
         {
-          SDL_Log("%s: `%s' requires an argument", cmd, args[0].s);
+          SDL_Log("%s: Can't convert '%s' to float", cmd, args[1]);
           return -1;
         }
 
-      rotate_view_delta(args[1].f);
+      rotate_view_delta(f);
     }
   else
     {
-      SDL_Log("%s: wrong argument: `%s', should be one of `top', `left',"
-              " `right', `bottom', `delta' <float>",
-              cmd, args[0].s);
-      return -1;
+      f = argtof(args[0], &err);
+
+      if (err)
+        {
+          SDL_Log("%s: wrong argument: `%s', should be one of <float>, "
+                  "`top', `left', `right', `bottom', `delta' <float>",
+                  cmd, args[0]);
+          return -1;
+        }
+
+      rotate_view(f);
     }
 
   update_render();
   return 0;
 }
 
-int move_cmd(char * cmd, struct cmdarg * args)
+int move_cmd(char * cmd, char ** args)
 {
-  if (is_empty_arg(args) || is_empty_arg(args + 1))
+  ASSERT_ARGS2(cmd, args);
+
+  int ex, ey;
+  float x, y;
+  x = argtof(args[0], &ex);
+  y = argtof(args[1], &ey);
+
+  if (ex || ey)
     {
-      SDL_Log("%s: the command requires two arguments", cmd);
+      SDL_Log("%s: Can't convert some arguments to float: %s, %s",
+              cmd, args[0], args[1]);
       return -1;
     }
 
-  if (args[0].type != FLOAT || args[1].type != FLOAT)
-    {
-      SDL_Log("%s: wrong argument type", cmd);
-      return -1;
-    }
-
-  move_view_delta(args[0].f, args[1].f);
+  move_view_delta(x, y);
   update_render();
   return 0;
 }

@@ -187,7 +187,8 @@ and disable it otherwise."
   (interactive)
   (with-current-buffer empic-mode-buffer
     (save-excursion
-      (dired-goto-file (concat default-directory empic-current-file))
+      (dired-goto-file (expand-file-name (concat default-directory
+                                                 empic-current-file)))
       (dired-next-line 1)
       (setq empic-current-file (dired-get-filename t))
       (empic-send (concat "load " empic-current-file "\n"))
@@ -198,7 +199,8 @@ and disable it otherwise."
   (interactive)
   (with-current-buffer empic-mode-buffer
     (save-excursion
-      (dired-goto-file (concat default-directory empic-current-file))
+      (dired-goto-file (expand-file-name (concat default-directory
+                                                 empic-current-file)))
       (dired-previous-line 1)
       (setq empic-current-file (dired-get-filename t))
       (empic-send (concat "load " empic-current-file "\n"))
@@ -209,7 +211,8 @@ and disable it otherwise."
   (interactive)
   (with-current-buffer empic-mode-buffer
     (save-excursion
-      (dired-goto-file (concat default-directory empic-current-file))
+      (dired-goto-file (expand-file-name (concat default-directory
+                                                 empic-current-file)))
       (dired-mark 1)))
   (empic-load-next))
 

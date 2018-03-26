@@ -30,6 +30,33 @@ size_t commands_num = 0;
 FILE * command_stream = NULL;
 Uint32 command_event_id;
 
+float argtof(char * arg, int * error)
+{
+  char * end;
+  float f = strtof(arg, &end);
+
+  if (arg == end || isspace(*end))
+    {
+      if (error)
+        *error = 1;
+      SDL_Log("argtof: Can't convert %s to a float", arg);
+      return 0.0f;
+    }
+
+  if (errno == ERANGE)
+    {
+      const char
+        *err = f == HUGE_VALF || f == -HUGE_VALF ? "over" : "under";
+
+      SDL_Log("argtof: %s causes %sflow", arg, err);
+    }
+
+  if (error)
+    *error = 0;
+
+  return f;
+}
+
 void register_command(char * name, cmdfn fn)
 {
   assert(commands_num < sizeof(commands_table) / sizeof(struct command));
@@ -40,10 +67,10 @@ void register_command(char * name, cmdfn fn)
 
 #define MAX_ARGS 255
 
-static struct cmdarg * read_cmd()
+static char ** read_cmd()
 {
   static char str[2048];
-  static struct cmdarg args[MAX_ARGS + 1];
+  static char * args[MAX_ARGS + 1];
 
   char * p = fgets(str, sizeof(str), command_stream);
   ssize_t n;
@@ -58,45 +85,19 @@ static struct cmdarg * read_cmd()
     p[n - 2] = '\0';
 
   n = 1;
-  args[0].type = STRING;
-  args[0].s = p = strtok(str, " \t");
+  args[0] = p = strtok(str, " \t");
 
   while((p = strtok(NULL, " \t")) && n <= MAX_ARGS)
-    {
-      char * end;
-
-      args[n].f = strtof(p, &end);
-
-      if (p == end || isspace(*end))
-        {
-          args[n].type = STRING;
-          args[n].s = p;
-        }
-      else
-        {
-          args[n].type = FLOAT;
-          if (errno == ERANGE)
-            {
-              const char
-                *err = args[n].f == HUGE_VALF || args[n].f == -HUGE_VALF ?
-                "over" : "under";
-
-              SDL_Log("read_cmd: the argument %s causes %sflow", p, err);
-            }
-        }
-
-      n++;
-    }
+    args[n++] = p;
 
   if (p && n > MAX_ARGS)
     {
       SDL_Log("%s: exceeded maximum number (%d) of arguments",
-              args[0].s, MAX_ARGS);
+              args[0], MAX_ARGS);
       n = MAX_ARGS + 1;
     }
 
-  args[n].type = STRING;
-  args[n].s = NULL;
+  args[n] = NULL;
 
   return args;
 }
@@ -115,9 +116,9 @@ static int thread_fun(void *data)
 
   while (!stop_thread)
     {
-      struct cmdarg * args = read_cmd();
+      char ** args = read_cmd();
 
-      if (!args || !args[0].s)
+      if (!args || !args[0])
         continue;
 
       event.type = command_event_id;
@@ -175,19 +176,19 @@ void stop_read_commands()
   stop_thread = 1;
 }
 
-int exec_command(struct cmdarg * args)
+int exec_command(char ** args)
 {
   int i, r;
 
   for(i = 0; i < commands_num; i++)
-    if (!strcmp(args[0].s, commands_table[i].name))
+    if (!strcmp(args[0], commands_table[i].name))
       break;
 
   if (i < commands_num)
     r = commands_table[i].fn(commands_table[i].name, args + 1);
   else
     {
-      SDL_Log("%s: unknown command", args[0].s);
+      SDL_Log("%s: unknown command", args[0]);
       r = -1;
     }
 
