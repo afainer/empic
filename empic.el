@@ -57,6 +57,9 @@ Don't set this variable directly.  Use the function
     (define-key map [kp-6] 'empic-move-right)
     (define-key map [kp-8] 'empic-move-up)
     (define-key map [kp-2] 'empic-move-down)
+    (define-key map [space] 'empic-load-next)
+    (define-key map [backspace] 'empic-load-prev)
+    (define-key map [?m] 'empic-mark)
     map)
   "Local keymap for Empic minor mode.")
 
@@ -66,6 +69,9 @@ Don't set this variable directly.  Use the function
 
 (defvar-local empic-mode-buffer nil
   "A dired buffer with enabled `empic-mode'")
+
+(defvar-local empic-current-file nil
+  "Currently loaded file.")
 
 (defun empic-filter (proc string)
   "Empic mode filter function for PROC.
@@ -116,7 +122,8 @@ Don't use this function, use `empic-mode' instead."
                       :stderr (get-buffer-create
                                (concat "*empic-errors-" (buffer-name) "*"))
                       :command (list empic-program "-e"
-                                     (dired-get-filename t))
+                                     (setq empic-current-file
+                                           (dired-get-filename t)))
                       :filter 'empic-filter
                       :sentinel 'empic-sentinel))
   (let ((b (current-buffer)))
@@ -174,6 +181,37 @@ and disable it otherwise."
 (define-empic-command "move" ("right" . "10 0"))
 (define-empic-command "move" ("up" . "0 10"))
 (define-empic-command "move" ("down" . "0 -10"))
+
+(defun empic-load-next ()
+  "Load the next file."
+  (interactive)
+  (with-current-buffer empic-mode-buffer
+    (save-excursion
+      (dired-goto-file (concat default-directory empic-current-file))
+      (dired-next-line 1)
+      (setq empic-current-file (dired-get-filename t))
+      (empic-send (concat "load " empic-current-file "\n"))
+      (empic-zoom-fit-big))))
+
+(defun empic-load-prev ()
+  "Load the previous file."
+  (interactive)
+  (with-current-buffer empic-mode-buffer
+    (save-excursion
+      (dired-goto-file (concat default-directory empic-current-file))
+      (dired-previous-line 1)
+      (setq empic-current-file (dired-get-filename t))
+      (empic-send (concat "load " empic-current-file "\n"))
+      (empic-zoom-fit-big))))
+
+(defun empic-mark ()
+  "Mark the current file in a Dired buffer."
+  (interactive)
+  (with-current-buffer empic-mode-buffer
+    (save-excursion
+      (dired-goto-file (concat default-directory empic-current-file))
+      (dired-mark 1)))
+  (empic-load-next))
 
 (defun empic-quit ()
   "Quit Empic.

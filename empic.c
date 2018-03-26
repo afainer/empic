@@ -106,9 +106,26 @@ int quit_cmd(char * cmd, struct cmdarg * args)
   return 0;
 }
 
+int load_cmd(char * cmd, struct cmdarg * args)
+{
+  if (is_empty_arg(args))
+    SDL_Log("%s: the command requires an argument", cmd);
+  else if (args[0].type != STRING)
+    SDL_Log("%s: wrong argument type", cmd);
+  else if (load_image(args[0].s))
+    {
+      set_title(args[0].s);
+      update_render();
+      return 0;
+    }
+
+  return -1;
+}
+
 void register_empic_commands()
 {
   register_command("quit", quit_cmd);
+  register_command("load", load_cmd);
 }
 
 int main(int argc, char ** argv)
