@@ -63,7 +63,6 @@ Don't set this variable directly.  Use the function
     (define-key map " " 'empic-load-next)
     (define-key map [space] 'empic-load-next)
     (define-key map [backspace] 'empic-load-prev)
-    (define-key map [?m] 'empic-mark)
     (define-key map [?q] 'empic-quit)
     map)
   "Local keymap for Empic minor mode.")
@@ -78,6 +77,8 @@ Don't set this variable directly.  Use the function
     (define-key map [right] 'empic-move-right)
     (define-key map [up] 'empic-move-up)
     (define-key map [down] 'empic-move-down)
+    (define-key map [?m] 'empic-mark)
+    (define-key map [?u] 'empic-unmark)
     map)
   "The keymap which is active in the Empic window.")
 
@@ -218,14 +219,22 @@ and disable it otherwise."
   (interactive "p")
   (empic-load-next (- (or arg 1))))
 
-(defun empic-mark ()
-  "Mark the current file in a Dired buffer."
+(defun empic-mark (&optional unmark)
+  "Mark the current file in a Dired buffer.
+If UNMARK is non-nil, then unmark the current file."
   (interactive)
   (with-empic-dired
     (dired-goto-file (expand-file-name (concat default-directory
                                                empic-current-file)))
-    (dired-mark 1))
+    (if unmark
+        (dired-unmark 1)
+      (dired-mark 1)))
   (empic-load-next))
+
+(defun empic-unmark ()
+  "Unmark the current file in a Dired buffer."
+  (interactive)
+  (empic-mark t))
 
 (defun empic-quit ()
   "Quit Empic.
