@@ -72,6 +72,15 @@ Don't set this variable directly.  Use the function
     (setq minor-mode-map-alist
           (cons (cons 'empic-mode empic-mode-map) minor-mode-map-alist)))
 
+(defvar empic-mode-internal-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map [left] 'empic-move-left)
+    (define-key map [right] 'empic-move-right)
+    (define-key map [up] 'empic-move-up)
+    (define-key map [down] 'empic-move-down)
+    map)
+  "The keymap which is active in the Empic window.")
+
 (defvar-local empic-mode-buffer nil
   "A Dired buffer with enabled `empic-mode'")
 
@@ -95,10 +104,10 @@ Read keys from STRING, lookup bindings and run commands."
           (while (and (/= (point) m) (not (eobp)))
             (setq p (point))
             (end-of-line)
-            (let ((k (lookup-key
-                      empic-mode-map
-                      (kbd (buffer-substring-no-properties p (point))))))
-	      (if k (funcall k)))
+            (let* ((key (kbd (buffer-substring-no-properties p (point))))
+                   (def (or (lookup-key empic-mode-map key)
+                            (lookup-key empic-mode-internal-map key))))
+	      (if def (funcall def)))
             (forward-line)))))))
 
 (defun empic-sentinel (proc event)
@@ -188,6 +197,8 @@ and disable it otherwise."
      (save-excursion
        ,@body)))
 
+(put 'with-empic-dired 'lisp-indent-function 0)
+
 (defun empic-load-next (&optional arg)
   "Load the next file."
   (interactive "p")
@@ -195,9 +206,12 @@ and disable it otherwise."
     (dired-goto-file (expand-file-name (concat default-directory
                                                empic-current-file)))
     (dired-next-line (or arg 1))
-    (setq empic-current-file (dired-get-filename t))
-    (send-string empic-mode (concat "load " empic-current-file "\n"))
-    (empic-zoom-fit-big)))
+    (when (dired-move-to-filename)
+      (let ((file (dired-get-filename t t)))
+        (unless (member file '("." ".."))
+          (setq empic-current-file (dired-get-filename t t))
+          (send-string empic-mode (concat "load " empic-current-file "\n"))
+          (empic-zoom-fit-big))))))
 
 (defun empic-load-prev (&optional arg)
   "Load the previous file."
