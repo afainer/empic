@@ -42,10 +42,13 @@ Don't set this variable directly.  Use the function
   (let ((map (make-sparse-keymap)))
     (define-key map [kp-add] 'empic-zoom-in)
     (define-key map [kp-subtract] 'empic-zoom-out)
+    (define-key map [?1] 'empic-zoom-1)
     (define-key map [kp-1] 'empic-zoom-1)
     (define-key map [kp-end] 'empic-zoom-1)
+    (define-key map [?0] 'empic-zoom-fit-big)
     (define-key map [kp-0] 'empic-zoom-fit-big)
     (define-key map [kp-insert] 'empic-zoom-fit-big)
+    (define-key map [?9] 'empic-zoom-fit-small)
     (define-key map [kp-9] 'empic-zoom-fit-small)
     (define-key map [kp-prior] 'empic-zoom-fit-small)
     (define-key map [?/] 'empic-rotate-top)
@@ -57,9 +60,11 @@ Don't set this variable directly.  Use the function
     (define-key map [kp-6] 'empic-move-right)
     (define-key map [kp-8] 'empic-move-up)
     (define-key map [kp-2] 'empic-move-down)
+    (define-key map " " 'empic-load-next)
     (define-key map [space] 'empic-load-next)
     (define-key map [backspace] 'empic-load-prev)
     (define-key map [?m] 'empic-mark)
+    (define-key map [?q] 'empic-quit)
     map)
   "Local keymap for Empic minor mode.")
 
@@ -68,7 +73,7 @@ Don't set this variable directly.  Use the function
           (cons (cons 'empic-mode empic-mode-map) minor-mode-map-alist)))
 
 (defvar-local empic-mode-buffer nil
-  "A dired buffer with enabled `empic-mode'")
+  "A Dired buffer with enabled `empic-mode'")
 
 (defvar-local empic-current-file nil
   "Currently loaded file.")
@@ -146,11 +151,6 @@ and disable it otherwise."
       (if empic-mode
           (empic-quit)))))
 
-(defun empic-send (str)
-  "Send STR to an Empic process."
-  (when empic-mode
-    (process-send-string empic-mode str)))
-
 (defmacro define-empic-command (command arg &optional optarg)
   (let ((arg (if (consp arg) (car arg) arg))
         (val (if (consp arg) (cdr arg) arg))
@@ -182,38 +182,35 @@ and disable it otherwise."
 (define-empic-command "move" ("up" . "0 10"))
 (define-empic-command "move" ("down" . "0 -10"))
 
-(defun empic-load-next ()
-  "Load the next file."
-  (interactive)
-  (with-current-buffer empic-mode-buffer
-    (save-excursion
-      (dired-goto-file (expand-file-name (concat default-directory
-                                                 empic-current-file)))
-      (dired-next-line 1)
-      (setq empic-current-file (dired-get-filename t))
-      (empic-send (concat "load " empic-current-file "\n"))
-      (empic-zoom-fit-big))))
+(defmacro with-empic-dired (&rest body)
+  "Evaluate the forms of BODY with the Empic Dired buffer."
+  `(with-current-buffer (if empic-mode (current-buffer) empic-mode-buffer)
+     (save-excursion
+       ,@body)))
 
-(defun empic-load-prev ()
+(defun empic-load-next (&optional arg)
+  "Load the next file."
+  (interactive "p")
+  (with-empic-dired
+    (dired-goto-file (expand-file-name (concat default-directory
+                                               empic-current-file)))
+    (dired-next-line (or arg 1))
+    (setq empic-current-file (dired-get-filename t))
+    (send-string empic-mode (concat "load " empic-current-file "\n"))
+    (empic-zoom-fit-big)))
+
+(defun empic-load-prev (&optional arg)
   "Load the previous file."
-  (interactive)
-  (with-current-buffer empic-mode-buffer
-    (save-excursion
-      (dired-goto-file (expand-file-name (concat default-directory
-                                                 empic-current-file)))
-      (dired-previous-line 1)
-      (setq empic-current-file (dired-get-filename t))
-      (empic-send (concat "load " empic-current-file "\n"))
-      (empic-zoom-fit-big))))
+  (interactive "p")
+  (empic-load-next (- (or arg 1))))
 
 (defun empic-mark ()
   "Mark the current file in a Dired buffer."
   (interactive)
-  (with-current-buffer empic-mode-buffer
-    (save-excursion
-      (dired-goto-file (expand-file-name (concat default-directory
-                                                 empic-current-file)))
-      (dired-mark 1)))
+  (with-empic-dired
+    (dired-goto-file (expand-file-name (concat default-directory
+                                               empic-current-file)))
+    (dired-mark 1))
   (empic-load-next))
 
 (defun empic-quit ()
