@@ -79,6 +79,7 @@ Don't set this variable directly.  Use the function
     (define-key map [down] 'empic-move-down)
     (define-key map [?m] 'empic-mark)
     (define-key map [?u] 'empic-unmark)
+    (define-key map [?d] 'empic-flag-deletion)
     map)
   "The keymap which is active in the Empic window.")
 
@@ -86,7 +87,48 @@ Don't set this variable directly.  Use the function
   "A Dired buffer with enabled `empic-mode'")
 
 (defvar-local empic-current-file nil
-  "Currently loaded file.")
+  "The currently loaded file.")
+
+(defface empic-file
+  '((t :box t))
+  "Face used for the currently loaded file.")
+(defvar empic-file-face 'empic-file
+  "Face name used for the currently loaded file.")
+
+(defface empic-file-marked
+  '((t :box t :inherit dired-marked))
+  "Face used for the currently loaded file which is marked.")
+(defvar empic-file-marked-face 'empic-file-marked
+  "Face name used for the currently loaded file which is marked.")
+
+(defface empic-file-flagged
+  '((t :box t :inherit dired-flagged))
+  "Face used for the currently loaded file which is flagged.")
+(defvar empic-file-flagged-face 'empic-file-flagged
+  "Face name used for the currently loaded file which is flagged.")
+
+(defvar empic-font-lock-keywords
+  (list (cons #'empic-font-lock-search
+              'empic-file-face)
+        (cons #'empic-font-lock-search-marked
+              'empic-file-marked-face)
+        (cons #'empic-font-lock-search-flagged
+              'empic-file-flagged-face)))
+
+(defun empic-font-lock-search (limit)
+  (and (not (looking-at-p (concat "^[" (char-to-string dired-marker-char) "]")))
+       (not (looking-at-p (concat "^[" (char-to-string dired-del-marker) "]")))
+       (re-search-forward empic-current-file limit t)))
+
+(defun empic-font-lock-search-marked (limit)
+  (and (looking-at-p (concat "^[" (char-to-string dired-marker-char) "]"))
+       (not (looking-at-p (concat "^[" (char-to-string dired-del-marker) "]")))
+       (re-search-forward empic-current-file limit t)))
+
+(defun empic-font-lock-search-flagged (limit)
+  (and (not (looking-at-p (concat "^[" (char-to-string dired-marker-char) "]")))
+       (looking-at-p (concat "^[" (char-to-string dired-del-marker) "]"))
+       (re-search-forward empic-current-file limit t)))
 
 (defun empic-filter (proc string)
   "Empic mode filter function for PROC.
@@ -111,6 +153,11 @@ Read keys from STRING, lookup bindings and run commands."
 	      (if def (funcall def)))
             (forward-line)))))))
 
+(defun empic-goto-current-file ()
+  "Move point to the currently loaded file."
+  (dired-goto-file (expand-file-name (concat default-directory
+                                             empic-current-file))))
+
 (defun empic-sentinel (proc event)
   "Empic mode sentinel for PROC.
 Disable the Empic mode in its Dired buffer."
@@ -123,7 +170,11 @@ Disable the Empic mode in its Dired buffer."
     (with-current-buffer (process-buffer proc)
       (when (buffer-name empic-mode-buffer)
         (with-current-buffer empic-mode-buffer
-          (setq empic-mode nil))))))
+          (setq empic-mode nil)
+          (font-lock-remove-keywords nil empic-font-lock-keywords)
+          (save-excursion
+            (empic-goto-current-file)
+            (font-lock-flush (point) (dired-move-to-end-of-filename))))))))
 
 (defun empic-enable-mode ()
   "Enable the Empic minor mode.
@@ -141,6 +192,9 @@ Don't use this function, use `empic-mode' instead."
                                            (dired-get-filename t)))
                       :filter 'empic-filter
                       :sentinel 'empic-sentinel))
+  (font-lock-add-keywords nil empic-font-lock-keywords)
+  (save-excursion
+    (font-lock-flush (dired-move-to-filename) (dired-move-to-end-of-filename)))
   (let ((b (current-buffer)))
     (with-current-buffer (process-buffer empic-mode)
       (erase-buffer)
@@ -204,15 +258,20 @@ and disable it otherwise."
   "Load the next file."
   (interactive "p")
   (with-empic-dired
-    (dired-goto-file (expand-file-name (concat default-directory
-                                               empic-current-file)))
-    (dired-next-line (or arg 1))
-    (when (dired-move-to-filename)
-      (let ((file (dired-get-filename t t)))
-        (unless (member file '("." ".."))
-          (setq empic-current-file (dired-get-filename t t))
-          (send-string empic-mode (concat "load " empic-current-file "\n"))
-          (empic-zoom-fit-big))))))
+    (empic-goto-current-file)
+    (let ((beg1 (point))
+          (end1 (dired-move-to-end-of-filename)))
+      (dired-next-line (or arg 1))
+      (when (dired-move-to-filename)
+        (let ((beg2 (point))
+              (end2 (dired-move-to-end-of-filename))
+              (file (dired-get-filename t t)))
+          (unless (member file '("." ".."))
+            (setq empic-current-file (dired-get-filename t t))
+            (font-lock-flush beg1 end1)
+            (font-lock-flush beg2 end2)
+            (send-string empic-mode (concat "load " empic-current-file "\n"))
+            (empic-zoom-fit-big)))))))
 
 (defun empic-load-prev (&optional arg)
   "Load the previous file."
@@ -224,8 +283,7 @@ and disable it otherwise."
 If UNMARK is non-nil, then unmark the current file."
   (interactive)
   (with-empic-dired
-    (dired-goto-file (expand-file-name (concat default-directory
-                                               empic-current-file)))
+    (empic-goto-current-file)
     (if unmark
         (dired-unmark 1)
       (dired-mark 1)))
@@ -235,6 +293,13 @@ If UNMARK is non-nil, then unmark the current file."
   "Unmark the current file in a Dired buffer."
   (interactive)
   (empic-mark t))
+
+(defun empic-flag-deletion ()
+  (interactive)
+  (with-empic-dired
+    (empic-goto-current-file)
+    (dired-flag-file-deletion 1))
+  (empic-load-next))
 
 (defun empic-quit ()
   "Quit Empic.
